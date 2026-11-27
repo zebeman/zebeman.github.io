@@ -186,6 +186,10 @@ footer{background:var(--ink);color:var(--bg);padding:0 0 40px}
 .tabs button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .big-pic{position:relative;aspect-ratio:4/3;background:var(--paper);border:1px solid var(--line)}
 .big-pic svg{position:absolute;inset:0;width:100%;height:100%}
+.card .pic img,.big-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.card .pic img{transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.card:hover .pic img{transform:scale(1.05)}
+.big-pic.photo{aspect-ratio:16/9}
 .facts{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);margin:24px 0}
 .facts div{padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
 .facts span{display:block;color:var(--mut);font-size:13px}
@@ -290,13 +294,13 @@ footer{background:var(--ink);color:var(--bg);padding:0 0 40px}
 <div><span>Tarih</span><b id="yr" style="font-weight:400">2026</b></div>
 <div><span>Çizen</span>E. Zeb</div>
 </div>
-<p class="demo">Demo: projeler ve görseller örnektir, gerçek çalışmalar eklenecek.</p>
+<p class="demo">Not: Bordo Banyo Konsepti dışındaki projeler örnektir, gerçek çalışmalar eklenecek.</p>
 </div></footer>
 
 <div class="pv" id="pv" role="dialog" aria-modal="true" aria-labelledby="pvt">
 <div class="top"><div class="wrap"><b id="pvt"></b><div class="pvn"><button id="pvp" aria-label="Önceki proje">←</button><button id="pvx">Projeye dön ✕</button><button id="pvnx" aria-label="Sonraki proje">→</button></div></div></div>
 <div class="wrap pvb">
-<div><div class="tabs" id="pvtabs"></div><div class="big-pic"><svg viewBox="0 0 400 300" class="draw" id="pvsvg"></svg></div></div>
+<div><div class="tabs" id="pvtabs"></div><div class="big-pic" id="bigpic"><svg viewBox="0 0 400 300" class="draw" id="pvsvg"></svg><img id="pvimg" alt="" style="display:none"></div></div>
 <div id="pvinfo"></div>
 </div>
 </div>
@@ -344,6 +348,7 @@ else{s+=R(40,60,150,200)+[100,140,180,220].map(y=>L(40,y,190,y,'f')).join('')+R(
 s+=DIM(20,24,380,24,n%2?'360':'420')+DIM(396,40,396,260,'275')+T(200,288,'A–A görünüşü · 1:50','ar');return s};
 
 const P=[
+{id:"bordo",t:"Bordo Banyo Konsepti",c:"Banyo",y:"2026",img:"images/banyo.jpg",alt:"Bordo duvarlı banyo: kavisli krem tezgâh, siyah cam lavabolar, ışıklı oval aynalar ve siyah-krem geometrik karo zemin",tool3:"3B görselleştirme",sum:"Derin bordo duvarlar, kavisli tezgâh ve geometrik zemin.",ap:"Bordo duvarların derinliğini sıcak ışıkla ortaya çıkarmak istedim. Kavisli tezgâh ve yuvarlatılmış, ışıklı aynalarla zemindeki keskin geometrik deseni dengeledim.",m:"Bordo boyalı duvar, siyah cam lavabo, pirinç armatür, siyah-krem geometrik karo"},
 {id:"moda",t:"Moda Stüdyo Daire",c:"Konut",y:"2026",a:"37 m²",s:"1:50",tool:"AutoCAD, SketchUp, V-Ray",d:"8 hafta",sum:"Tek cephesi olan küçük bir dairede açık plan yaşam.",pr:"1960'lardan kalma, koridorla bölünmüş ve karanlık bir daire. Kullanıcı evden çalışan tek bir kişi.",ap:"Mutfak ile salon arasındaki duvarı kaldırıp ışığı derine taşıdım. Çalışma köşesini hole açılan bir niş olarak kurdum, depolamayı duvar kalınlığına gömdüm.",m:"Açık meşe, kireç sıva, traverten tezgâh",
 draw:()=>{let s=`<path class="w" d="M20 30H380V270H20Z"/>`+W(200,30,200,110)+W(280,30,280,170)+W(20,190,280,190)+W(280,210,280,270)+WIN(60,26,80,8)+WIN(300,26,60,8)+D(280,170,40,90)+SOFA(40,140,130,36)+R(70,95,60,28,'t',3)+RTB(165,70,18,4)+R(210,40,62,24)+BED(300,60,62,100)+R(40,205,90,30)+C(85,250,8,'f')+R(300,215,62,46,'t',4)+DIM(20,14,380,14,'920')+T(110,250,'Çalışma','ar')+T(110,170,'Salon','lb')+T(330,190,'Yatak','lb');return s}},
 {id:"kuzguncuk",t:"Kuzguncuk Kahve Evi",c:"Ticari",y:"2025",a:"62 m²",s:"1:50",tool:"AutoCAD, 3ds Max, Corona",d:"6 hafta",sum:"Eski bir bakkal dükkânından mahalle kahvecisine.",pr:"Dar ve derin bir zemin kat. Sokakla bağ kurulmalı, bar arkası servis için verimli olmalı.",ap:"Barı derinliğe paralel uzatıp servis hattını tek çizgiye topladım. Vitrin önüne sokağa bakan bir oturma bandı koydum.",m:"Terrazzo zemin, yeşil fayans, cevizli bar ön yüzü",
@@ -359,7 +364,7 @@ draw:()=>{let s=`<path class="w" d="M20 30H380V270H20Z"/>`;for(let i=0;i<4;i++)s
 ];
 const cats=["Tümü",...new Set(P.map(p=>p.c))];
 $('#filters').innerHTML=cats.map((c,i)=>`<button aria-pressed="${!i}" data-c="${c}">${c}</button>`).join('');
-$('#grid').innerHTML=P.map((p,i)=>`<button class="card rv" data-i="${i}" data-c="${p.c}" style="transition-delay:${(i%3)*.1}s"><div class="pic"><svg viewBox="0 0 400 300" class="draw" aria-hidden="true">${p.draw()}</svg></div><div class="meta"><h3>${p.t}</h3><small>${p.c} · ${p.y}</small></div><p>${p.sum}</p></button>`).join('');
+$('#grid').innerHTML=P.map((p,i)=>`<button class="card rv" data-i="${i}" data-c="${p.c}" style="transition-delay:${(i%3)*.1}s"><div class="pic">${p.img?`<img src="${p.img}" alt="${p.alt}" loading="lazy">`:`<svg viewBox="0 0 400 300" class="draw" aria-hidden="true">${p.draw()}</svg>`}</div><div class="meta"><h3>${p.t}</h3><small>${p.c} · ${p.y}</small></div><p>${p.sum}</p></button>`).join('');
 $('#filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#filters button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.querySelectorAll('.card').forEach(c=>c.classList.toggle('hide',b.dataset.c!=="Tümü"&&c.dataset.c!==b.dataset.c))});
 
 const M=[["oak","Açık meşe","Döşeme, mobilya"],["trv","Traverten","Tezgâh, basamak"],["ter","Terrazzo","Zemin"],["lin","Keten","Döşemelik, perde"],["brs","Pirinç","Detay, aydınlatma"],["mcb","Mikro beton","Islak hacim"]];
@@ -400,9 +405,13 @@ sv.querySelectorAll('.rm').forEach(r=>{r.addEventListener('mouseenter',()=>{$('#
 const nav=$('#nav');const onS=()=>nav.classList.toggle('on',scrollY>30);addEventListener('scroll',onS,{passive:true});onS();
 
 let cur=0,tab=0;const pv=$('#pv');
-const render=()=>{const p=P[cur];$('#pvt').textContent=p.t;$('#pvtabs').innerHTML=['Plan','Görünüş'].map((t,i)=>`<button aria-pressed="${i===tab}" data-t="${i}">${t}</button>`).join('');
-const g=$('#pvsvg');g.innerHTML=tab?elev(cur):p.draw();g.parentElement.classList.remove('in');prep(g.parentElement);requestAnimationFrame(()=>requestAnimationFrame(()=>g.parentElement.classList.add('in')));
-$('#pvinfo').innerHTML=`<h2>${p.t}</h2><p>${p.sum}</p><div class="facts"><div><span>Kategori</span>${p.c}</div><div><span>Yıl</span>${p.y}</div><div><span>Alan</span>${p.a}</div><div><span>Ölçek</span>${p.s}</div><div><span>Süre</span>${p.d}</div><div><span>Yazılım</span>${p.tool}</div></div><h4>Problem</h4><p>${p.pr}</p><h4>Yaklaşım</h4><p>${p.ap}</p><h4>Malzemeler</h4><p>${p.m}</p>`};
+const render=()=>{const p=P[cur],ph=!!p.img,g=$('#pvsvg'),im=$('#pvimg'),bp=$('#bigpic');$('#pvt').textContent=p.t;
+$('#pvtabs').innerHTML=ph?'':['Plan','Görünüş'].map((t,i)=>`<button aria-pressed="${i===tab}" data-t="${i}">${t}</button>`).join('');
+bp.classList.toggle('photo',ph);g.style.display=ph?'none':'';im.style.display=ph?'block':'none';
+if(ph){im.src=p.img;im.alt=p.alt}else{g.innerHTML=tab?elev(cur):p.draw();bp.classList.remove('in');prep(bp);requestAnimationFrame(()=>requestAnimationFrame(()=>bp.classList.add('in')))}
+const F=[["Kategori",p.c],["Yıl",p.y],["Alan",p.a],["Ölçek",p.s],["Süre",p.d],["Tür",p.tool3],["Yazılım",p.tool]].filter(f=>f[1]);
+const S=[["Problem",p.pr],["Yaklaşım",p.ap],["Malzemeler",p.m]].filter(s=>s[1]);
+$('#pvinfo').innerHTML=`<h2>${p.t}</h2><p>${p.sum}</p><div class="facts">${F.map(f=>`<div><span>${f[0]}</span>${f[1]}</div>`).join('')}</div>${S.map(s=>`<h4>${s[0]}</h4><p>${s[1]}</p>`).join('')}`};
 const open=i=>{cur=i;tab=0;render();pv.classList.add('open');document.body.style.overflow='hidden';pv.scrollTop=0;$('#pvx').focus()};
 const close=()=>{pv.classList.remove('open');document.body.style.overflow='';const c=document.querySelector(`.card[data-i="${cur}"]`);if(c)c.focus()};
 $('#grid').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)open(+c.dataset.i)});
